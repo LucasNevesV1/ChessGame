@@ -1,4 +1,18 @@
 // ========================= src/view/ChessGUI.java =========================
+
+/**
+ * ChessGUI.java
+ * Interface gráfica principal do jogo de xadrez.
+ *
+ * Responsável por exibir o tabuleiro, gerenciar interações do usuário,
+ * mostrar histórico de jogadas e status do jogo.
+ *
+ * Principais responsabilidades:
+ * - Renderizar o tabuleiro e peças
+ * - Destacar movimentos legais, seleção e último lance
+ * - Integrar com a lógica do jogo (classe Game)
+ * - Exibir histórico e status
+ */
 package view;
 
 import controller.Game;
@@ -18,9 +32,20 @@ import model.pieces.Piece;
 public class ChessGUI extends JFrame {
     private static final long serialVersionUID = 1L; // evita warning de serialização
 
-    // --- Configuração de cores e estilos das casas ---
-    private static final Color LIGHT_SQ = new Color(126, 140, 84);      // cor das casas claras
-    private static final Color DARK_SQ = new Color(193, 193, 193);      // cor das casas escuras
+    // --- Temas de cores ---
+    public enum BoardTheme {
+        VERDE_CINZA(new Color(126, 140, 84), new Color(193, 193, 193)),
+        ROXO_CINZA(new Color(140, 84, 126), new Color(193, 193, 193)),
+        AZUL_CINZA(new Color(84, 126, 140), new Color(193, 193, 193));
+
+        public final Color light, dark;
+        BoardTheme(Color light, Color dark) {
+            this.light = light;
+            this.dark = dark;
+        }
+    }
+
+    private BoardTheme currentTheme = BoardTheme.VERDE_CINZA;
     private static final Color HILITE_SELECTED = new Color(255, 237, 41); // cor de seleção
     private static final Color HILITE_LEGAL = new Color(26, 20, 196);     // cor de movimentos legais
     private static final Color HILITE_LASTMOVE = new Color(220, 170, 30); // cor do último lance
@@ -41,6 +66,8 @@ public class ChessGUI extends JFrame {
     // Menu e controles
     private JCheckBoxMenuItem pcAsBlack;
     private JMenuItem newGameItem, quitItem;
+    private JMenu themeMenu;
+    private JRadioButtonMenuItem verdeItem, roxoItem, azulItem;
 
     // Controle de seleção e movimentos legais
     private Position selected = null;
@@ -124,6 +151,8 @@ public class ChessGUI extends JFrame {
         add(status, BorderLayout.SOUTH);
         add(rightPanel, BorderLayout.EAST);
 
+        // Seletor de tema agora está no menu
+
         // Atualiza ícones ao redimensionar o painel do tabuleiro
         boardPanel.addComponentListener(new ComponentAdapter() {
             @Override
@@ -165,9 +194,37 @@ public class ChessGUI extends JFrame {
                 KeyStroke.getKeyStroke(KeyEvent.VK_Q, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         quitItem.addActionListener(e -> dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING)));
 
+        // Submenu de tema
+        themeMenu = new JMenu("Tema");
+        ButtonGroup themeGroup = new ButtonGroup();
+        verdeItem = new JRadioButtonMenuItem("Verde/Cinza", true);
+        roxoItem = new JRadioButtonMenuItem("Roxo/Cinza");
+        azulItem = new JRadioButtonMenuItem("Azul/Cinza");
+        themeGroup.add(verdeItem);
+        themeGroup.add(roxoItem);
+        themeGroup.add(azulItem);
+        themeMenu.add(verdeItem);
+        themeMenu.add(roxoItem);
+        themeMenu.add(azulItem);
+
+        verdeItem.addActionListener(e -> {
+            currentTheme = BoardTheme.VERDE_CINZA;
+            refresh();
+        });
+        roxoItem.addActionListener(e -> {
+            currentTheme = BoardTheme.ROXO_CINZA;
+            refresh();
+        });
+        azulItem.addActionListener(e -> {
+            currentTheme = BoardTheme.AZUL_CINZA;
+            refresh();
+        });
+
         gameMenu.add(newGameItem);
         gameMenu.addSeparator();
         gameMenu.add(pcAsBlack);
+        gameMenu.addSeparator();
+        gameMenu.add(themeMenu);
         gameMenu.addSeparator();
         gameMenu.add(quitItem);
 
@@ -180,7 +237,7 @@ public class ChessGUI extends JFrame {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         JButton btnNew = new JButton("Novo Jogo");
         btnNew.addActionListener(e -> doNewGame());
-        btnNew.setBackground(new Color(126, 140, 84)); // verde
+        btnNew.setBackground(new Color(128,128,128)); // verde
         btnNew.setForeground(Color.WHITE); // texto branco
         btnNew.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnNew.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -188,7 +245,7 @@ public class ChessGUI extends JFrame {
                 btnNew.setBackground(new Color(93, 101, 50)); // verde escuro
             }
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                btnNew.setBackground(new Color(126, 140, 84)); // verde original
+                btnNew.setBackground(new Color(128,128,128)); // verde original
             }
         });
         panel.add(btnNew);
@@ -463,7 +520,7 @@ public class ChessGUI extends JFrame {
         for (int r = 0; r < 8; r++) {
             for (int c = 0; c < 8; c++) {
                 boolean light = (r + c) % 2 == 0;
-                Color base = light ? LIGHT_SQ : DARK_SQ;
+                Color base = light ? currentTheme.light : currentTheme.dark;
                 JButton b = squares[r][c];
                 b.setBackground(base);
                 b.setBorder(null);
@@ -516,6 +573,9 @@ public class ChessGUI extends JFrame {
         if (aiThinking)
             chk = " — PC pensando...";
         status.setText("Jogada: " + side + chk);
+
+        // Atualiza cor do histórico conforme tema
+        history.setBackground(currentTheme.light);
 
         StringBuilder sb = new StringBuilder();
         var hist = game.history();

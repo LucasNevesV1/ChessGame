@@ -1,3 +1,15 @@
+
+/**
+ * Game.java
+ * Lógica principal do jogo de xadrez.
+ *
+ * Responsável por:
+ * - Gerenciar o estado do tabuleiro
+ * - Controlar o turno dos jogadores
+ * - Validar movimentos legais
+ * - Registrar histórico de jogadas
+ * - Detectar fim de jogo
+ */
 package controller;
 
 import java.util.ArrayList;
