@@ -16,6 +16,7 @@
 package view;
 
 import controller.Game;
+import ai.IANivel3;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -79,7 +80,7 @@ public class ChessGUI extends JFrame {
     // IA
     private boolean aiThinking = false;
     private final Random rnd = new Random();
-    private int aiLevel = 0; // 0 = fácil, 1 = médio
+    private int aiLevel = 0; // 0 = fácil, 1 = médio, 2 = difícil
 
     // Construtor da interface
     public ChessGUI() {
@@ -265,7 +266,7 @@ public class ChessGUI extends JFrame {
         panel.add(cb);
 
         panel.add(new JLabel("IA:"));
-        JComboBox<String> aiLevelBox = new JComboBox<>(new String[]{"Fácil", "Médio"});
+        JComboBox<String> aiLevelBox = new JComboBox<>(new String[]{"Fácil", "Médio", "Difícil"});
         aiLevelBox.setSelectedIndex(aiLevel);
         aiLevelBox.addActionListener(e -> aiLevel = aiLevelBox.getSelectedIndex());
         panel.add(aiLevelBox);
@@ -400,16 +401,18 @@ public class ChessGUI extends JFrame {
 
             @Override
             protected Void doInBackground() {
-                var allMoves = collectAllLegalMovesForSide(false);
-                if (allMoves.isEmpty())
-                    return null;
-
-                Move chosen;
+                Move chosen = null;
                 if (aiLevel == 0) {
                     // Fácil: aleatório
+                    var allMoves = collectAllLegalMovesForSide(false);
+                    if (allMoves.isEmpty())
+                        return null;
                     chosen = allMoves.get(rnd.nextInt(allMoves.size()));
-                } else {
+                } else if (aiLevel == 1) {
                     // Médio: prioriza capturas e centro
+                    var allMoves = collectAllLegalMovesForSide(false);
+                    if (allMoves.isEmpty())
+                        return null;
                     int bestScore = Integer.MIN_VALUE;
                     List<Move> bestList = new ArrayList<>();
                     for (Move mv : allMoves) {
@@ -426,9 +429,20 @@ public class ChessGUI extends JFrame {
                         }
                     }
                     chosen = bestList.get(rnd.nextInt(bestList.size()));
+                } else if (aiLevel == 2) {
+                    // Difícil: usa IANivel3
+                    IANivel3 iaNivel3 = new IANivel3();
+                    model.board.Move move = iaNivel3.makeMove(game);
+                    if (move != null) {
+                        aiFrom = move.getFrom();
+                        aiTo = move.getTo();
+                        return null;
+                    }
                 }
-                aiFrom = chosen.from;
-                aiTo = chosen.to;
+                if (chosen != null) {
+                    aiFrom = chosen.from;
+                    aiTo = chosen.to;
+                }
                 return null;
             }
 

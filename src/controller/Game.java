@@ -1,4 +1,3 @@
-
 /**
  * Game.java
  * Lógica principal do jogo de xadrez.
@@ -486,8 +485,11 @@ public class Game {
         return null;
     }
 
-    // --------- Snapshot ----------
-    private Game snapshotShallow() {
+    /**
+     * Cria uma cópia rasa do estado atual do jogo.
+     * Permite simular movimentos sem alterar o estado original.
+     */
+    public Game snapshotShallow() {
         Game g = new Game(true);
         g.board = this.board.copy(); // IMPORTANT: Board.copy() must deep-copy pieces and fix their board refs.
         g.whiteToMove = this.whiteToMove;
